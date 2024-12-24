@@ -1,8 +1,2 @@
-# Run manually to reformat a file:
-# clang-format -i --style=file <file>
-Language: C
+Language: C++
 BasedOnStyle: Google
-# IndentPPDirectives: AfterHash
-# IndentCaseLabels: false
-# AlwaysBreakTemplateDeclarations: false
-# DerivePointerAlignment: false
