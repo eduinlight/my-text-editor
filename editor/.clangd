@@ -1,2 +1,5 @@
 Diagnostics:
   UnusedIncludes: Strict
+
+CompileFlags:
+  Add: [-Wall -Wextra -std=c++23]

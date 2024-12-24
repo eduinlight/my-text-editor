@@ -3,8 +3,8 @@ SHELL=/bin/bash
 PROJECT_NAME=c-boilerplate
 
 # Compiler and flags
-CC = gcc
-CFLAGS = -Wall -Wextra -std=c17
+CC = g++
+CFLAGS = -Wall -Wextra -std=c++23
 CFLAGS_DEBUG = -g
 CFLAGS_RELEASE = -O3
 
@@ -19,11 +19,11 @@ OBJ_DIR = .obj
 TARGET_DEBUG = $(DEBUG_DIR)/${PROJECT_NAME}
 TARGET_RELEASE = $(RELEASE_DIR)/${PROJECT_NAME}
 
-# Find all .c files in the src directory
-SRCS = $(wildcard $(SRC_DIR)/*.c)
+# Find all .cpp files in the src directory
+SRCS = $(wildcard $(SRC_DIR)/*.cpp)
 
-# Convert .c source files to .o object files
-OBJS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
+# Convert .cpp source files to .o object files
+OBJS = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRCS))
 
 # Default target
 all: debug
@@ -42,7 +42,7 @@ $(TARGET_RELEASE): $(OBJS)
 	@mkdir -p $(RELEASE_DIR)
 	$(CC) $(CFLAGS) -o $@ $(OBJS)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
