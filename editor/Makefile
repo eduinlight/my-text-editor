@@ -52,6 +52,9 @@ clean:
 run:
 	@${TARGET_DEBUG}
 
+gdb:
+	@gdb ${TARGET_DEBUG}
+
 run-release:
 	@${TARGET_RELEASE}
 
