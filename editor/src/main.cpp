@@ -302,8 +302,14 @@ void initEditor() {
     die("getWindowSize");
 }
 
-void moveCursor(int c) {
+void editorProcessKeypress() {
+  int c = editorReadKey();
   switch (c) {
+  case CTRL_KEY('q'):
+    std::cout << TERM_CLEAR_SCREEN;
+    std::cout << TERM_MOVE_CURSOR_TOP_LEFT;
+    exit(0);
+    break;
   case 'h':
   case Key::ARROW_LEFT:
     if (E.cursor.x > 0)
@@ -331,41 +337,20 @@ void moveCursor(int c) {
     }
     break;
   case Key::PAGE_UP:
-  case Key::PAGE_DOWN: {
-    int times = E.screenRows;
-    while (times--)
-      moveCursor(c == Key::PAGE_UP ? Key::ARROW_UP : Key::ARROW_DOWN);
-  } break;
+    if (E.offset.y > 0) {
+      E.cursor.y = std::max(E.offset.y - E.screenRows, 0);
+    }
+    break;
+  case Key::PAGE_DOWN:
+    if (E.offset.y + E.screenRows < SZ(E.rows)) {
+      E.cursor.y = std::min((E.offset.y + E.screenRows * 2) - 1, SZ(E.rows) - 1);
+    }
+    break;
   case Key::HOME_KEY:
     E.cursor.x = 0;
     break;
   case Key::END_KEY:
     E.cursor.x = SZ(E.rows[E.cursor.y]);
-    break;
-  }
-}
-
-void editorProcessKeypress() {
-  int c = editorReadKey();
-  switch (c) {
-  case CTRL_KEY('q'):
-    std::cout << TERM_CLEAR_SCREEN;
-    std::cout << TERM_MOVE_CURSOR_TOP_LEFT;
-    exit(0);
-    break;
-  case Key::ARROW_UP:
-  case Key::ARROW_DOWN:
-  case Key::ARROW_LEFT:
-  case Key::ARROW_RIGHT:
-  case Key::PAGE_UP:
-  case Key::PAGE_DOWN:
-  case Key::END_KEY:
-  case Key::HOME_KEY:
-  case 'h':
-  case 'l':
-  case 'j':
-  case 'k':
-    moveCursor(c);
     break;
   }
 }
