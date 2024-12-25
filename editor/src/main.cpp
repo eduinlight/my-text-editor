@@ -55,7 +55,7 @@ struct Point {
   int x;
   int y;
 
-  Point(const int &_x, const int &&_y) : x(_x), y(_y) {}
+  Point(int _x, int _y) : x(_x), y(_y) {}
   Point() {}
 };
 
@@ -240,12 +240,18 @@ void editorDrawRows() {
   for (int y = 0; y < E.screenRows; y++) {
     int fileY = E.offset.y + y;
     if (fileY < SZ(E.rows)) {
-      auto row = E.rows[fileY].substr(0, E.screenCols);
-      currentBuffer.append(row);
-      if (SZ(row) < E.screenCols)
-        currentBuffer.append(TERM_CLEAR_ROW_FROM_CURSOR_TO_END);
-      if (y < SZ(E.rows) - 1)
+      if (y > 0)
         currentBuffer.append(TERM_MOVE_CURSOR_TO_START_NEXT_LINE);
+
+      auto row = E.rows[fileY];
+      std::string visibleRow;
+      if (!row.empty() && SZ(row) >= E.offset.x)
+        visibleRow = row.substr(E.offset.x, E.screenCols);
+      if (!visibleRow.empty())
+        currentBuffer.append(visibleRow);
+
+      if (SZ(visibleRow) < E.screenCols)
+        currentBuffer.append(TERM_CLEAR_ROW_FROM_CURSOR_TO_END);
     } else {
       if (y > 0)
         currentBuffer.append(TERM_MOVE_CURSOR_TO_START_NEXT_LINE);
@@ -259,6 +265,11 @@ void updateEditorScroll() {
     E.offset.y = E.cursor.y;
   else if (E.cursor.y >= E.offset.y + E.screenRows)
     E.offset.y = E.cursor.y - E.screenRows + 1;
+
+  if (E.cursor.x < E.offset.x)
+    E.offset.x = E.cursor.x;
+  else if (E.cursor.x >= E.offset.x + E.screenCols)
+    E.offset.x = E.cursor.x - E.screenCols + 1;
 }
 
 void editorRefreshScreen() {
@@ -308,7 +319,7 @@ void moveCursor(int c) {
     if (E.cursor.y > 0) {
       E.cursor.y--;
       if (!E.rows.empty() && E.cursor.x >= SZ(E.rows[E.cursor.y]))
-        E.cursor.x = SZ(E.rows[E.cursor.y]) - 1;
+        E.cursor.x = std::max(SZ(E.rows[E.cursor.y]) - 1, 0);
     }
     break;
   case 'j':
@@ -316,7 +327,7 @@ void moveCursor(int c) {
     if (E.cursor.y < SZ(E.rows) - 1) {
       E.cursor.y++;
       if (!E.rows.empty() && E.cursor.x >= SZ(E.rows[E.cursor.y]))
-        E.cursor.x = SZ(E.rows[E.cursor.y]) - 1;
+        E.cursor.x = std::max(SZ(E.rows[E.cursor.y]) - 1, 0);
     }
     break;
   case Key::PAGE_UP:
