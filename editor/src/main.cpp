@@ -26,14 +26,17 @@
 
 #define TERM_DISABLE_CURSOR "\x1b[?25l"
 #define TERM_ENABLE_CURSOR "\x1b[?25h"
+#define TERM_REPORT_CURSOR_POSITION "\x1b[6n"
+
+#define TERM_MOVE_CURSOR(y, x) (std::format("\x1b[{:d};{:d}H", (y), (x)))
 #define TERM_MOVE_CURSOR_TOP_LEFT "\x1b[H"
 #define TERM_MOVE_CURSOR_BOTTOM_RIGHT "\x1b[999C\x1b[999B"
-#define TERM_CLEAR_SCREEN "\x1b[2J"
-#define TERM_REPORT_CURSOR_POSITION "\x1b[6n"
 #define TERM_MOVE_CURSOR_TO_START_NEXT_LINE "\r\n"
-#define TERM_CLEAR_FROM_COL_TO_END "\x1b[K"
 
-typedef std::vector<char> buffer_t;
+#define TERM_CLEAR_SCREEN "\x1b[2J"
+#define TERM_CLEAR_ROW_FROM_CURSOR_TO_END "\x1b[K"
+
+typedef std::basic_string<char> buffer;
 
 enum Key {
   ARROW_LEFT = 1000,
@@ -71,7 +74,7 @@ struct EditorConfig {
 
 EditorConfig E;
 
-std::basic_string<char> currentBuffer;
+buffer currentBuffer;
 
 /*** terminal ***/
 
@@ -239,12 +242,12 @@ void editorDrawRows() {
       if (y > 0)
         currentBuffer.append(TERM_MOVE_CURSOR_TO_START_NEXT_LINE);
       currentBuffer.append("~");
-      currentBuffer.append(TERM_CLEAR_FROM_COL_TO_END);
+      currentBuffer.append(TERM_CLEAR_ROW_FROM_CURSOR_TO_END);
     } else {
       auto row = E.rows[y].substr(0, E.screenCols);
       currentBuffer.append(row);
       if (SZ(row) < E.screenCols)
-        currentBuffer.append(TERM_CLEAR_FROM_COL_TO_END);
+        currentBuffer.append(TERM_CLEAR_ROW_FROM_CURSOR_TO_END);
       if (y < SZ(E.rows) - 1)
         currentBuffer.append(TERM_MOVE_CURSOR_TO_START_NEXT_LINE);
     }
@@ -259,8 +262,7 @@ void editorRefreshScreen() {
 
   editorDrawRows();
 
-  currentBuffer.append(
-      std::format("\x1b[{:d};{:d}H", E.cursor.y + 1, E.cursor.x + 1));
+  currentBuffer.append(TERM_MOVE_CURSOR(E.cursor.y + 1, E.cursor.x + 1));
   currentBuffer.append(TERM_ENABLE_CURSOR);
 
   std::cout << currentBuffer;
