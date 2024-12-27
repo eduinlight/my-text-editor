@@ -1,12 +1,10 @@
-SHELL=/bin/bash
-
-PROJECT_NAME=c-boilerplate
+PROJECT_NAME=editor
 
 # Compiler and flags
 CC = g++
-CFLAGS = -Wall -Wextra -std=c++23
-CFLAGS_DEBUG = -g
-CFLAGS_RELEASE = -O3
+FLAGS = -Wall -Wextra -std=c++23
+FLAGS_DEBUG = -g
+FLAGS_RELEASE = -O3
 
 # Directories
 SRC_DIR = src
@@ -20,39 +18,39 @@ TARGET_DEBUG = $(DEBUG_DIR)/${PROJECT_NAME}
 TARGET_RELEASE = $(RELEASE_DIR)/${PROJECT_NAME}
 
 # Find all .cpp files in the src directory
-SRCS = $(wildcard $(SRC_DIR)/*.cpp)
+SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
 
 # Convert .cpp source files to .o object files
-OBJS = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRCS))
+OBJECTS = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SOURCES))
 
 # Default target
 all: debug
 
-debug: CFLAGS += $(CFLAGS_DEBUG)
+debug: FLAGS += $(FLAGS_DEBUG)
 debug: $(TARGET_DEBUG)
 
-release: CFLAGS += $(CFLAGS_RELEASE)
+release: FLAGS += $(FLAGS_RELEASE)
 release: $(TARGET_RELEASE)
 
-$(TARGET_DEBUG): $(OBJS)
+$(TARGET_DEBUG): $(OBJECTS)
 	@mkdir -p $(DEBUG_DIR)
-	$(CC) $(CFLAGS) -o $@ $(OBJS)
+	$(CC) $(FLAGS) -o $@ $(OBJECTS)
 
-$(TARGET_RELEASE): $(OBJS)
+$(TARGET_RELEASE): $(OBJECTS)
 	@mkdir -p $(RELEASE_DIR)
-	$(CC) $(CFLAGS) -o $@ $(OBJS)
+	$(CC) $(FLAGS) -o $@ $(OBJECTS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(OBJ_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(FLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(OBJ_DIR) $(BIN_DIR)
 
-run:
+run: debug
 	@${TARGET_DEBUG}
 
-gdb:
+gdb: debug
 	@gdb ${TARGET_DEBUG}
 
 run-release:

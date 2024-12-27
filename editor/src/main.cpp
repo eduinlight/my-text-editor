@@ -8,7 +8,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <format>
 #include <fstream>
 #include <ios>
 #include <iostream>
@@ -19,23 +18,12 @@
 #include <unistd.h>
 #include <vector>
 
+#include "term.h"
+
 /*** defines ***/
 
 #define CTRL_KEY(k) ((k) & 0x1f)
 #define SZ(x) ((int)x.size())
-
-#define TERM_DISABLE_CURSOR "\x1b[?25l"
-#define TERM_ENABLE_CURSOR "\x1b[?25h"
-#define TERM_REPORT_CURSOR_POSITION "\x1b[6n"
-
-#define TERM_MOVE_CURSOR(y, x) (std::format("\x1b[{:d};{:d}H", (y), (x)))
-#define TERM_MOVE_CURSOR_TOP_LEFT "\x1b[H"
-#define TERM_MOVE_CURSOR_BOTTOM_RIGHT "\x1b[999C\x1b[999B"
-#define TERM_MOVE_CURSOR_TO_START_NEXT_LINE "\r\n"
-
-#define TERM_CLEAR_SCREEN "\x1b[2J"
-#define TERM_CLEAR_ROW_FROM_CURSOR_TO_END "\x1b[K"
-#define TERM_EMPTY_LINE "~\x1b[K"
 
 typedef std::basic_string<char> buffer;
 
@@ -79,8 +67,8 @@ buffer currentBuffer;
 /*** terminal ***/
 
 void die(const char *s) {
-  std::cout << TERM_CLEAR_SCREEN;
-  std::cout << TERM_MOVE_CURSOR_TOP_LEFT;
+  std::cout << Term::TERM_CLEAR_SCREEN;
+  std::cout << Term::TERM_MOVE_CURSOR_TOP_LEFT;
 
   perror(s);
   exit(1);
@@ -177,13 +165,13 @@ int editorReadKey() {
 }
 
 int getWindowSizeFallback(int *rows, int *cols) {
-  if (std::cout.write(TERM_MOVE_CURSOR_BOTTOM_RIGHT, 12).fail())
+  if (std::cout.write(Term::TERM_MOVE_CURSOR_BOTTOM_RIGHT, 12).fail())
     return -1;
 
   char buf[32];
   size_t i = 0;
 
-  if (std::cout.write(TERM_REPORT_CURSOR_POSITION, 4).fail())
+  if (std::cout.write(Term::TERM_REPORT_CURSOR_POSITION, 4).fail())
     return -1;
 
   while (i < sizeof(buf) - 1) {
@@ -241,7 +229,7 @@ void editorDrawRows() {
     int fileY = E.offset.y + y;
     if (fileY < SZ(E.rows)) {
       if (y > 0)
-        currentBuffer.append(TERM_MOVE_CURSOR_TO_START_NEXT_LINE);
+        currentBuffer.append(Term::TERM_MOVE_CURSOR_TO_START_NEXT_LINE);
 
       auto row = E.rows[fileY];
       std::string visibleRow;
@@ -251,11 +239,11 @@ void editorDrawRows() {
         currentBuffer.append(visibleRow);
 
       if (SZ(visibleRow) < E.screenCols)
-        currentBuffer.append(TERM_CLEAR_ROW_FROM_CURSOR_TO_END);
+        currentBuffer.append(Term::TERM_CLEAR_ROW_FROM_CURSOR_TO_END);
     } else {
       if (y > 0)
-        currentBuffer.append(TERM_MOVE_CURSOR_TO_START_NEXT_LINE);
-      currentBuffer.append(TERM_EMPTY_LINE);
+        currentBuffer.append(Term::TERM_MOVE_CURSOR_TO_START_NEXT_LINE);
+      currentBuffer.append(Term::TERM_EMPTY_LINE);
     }
   }
 }
@@ -277,14 +265,14 @@ void editorRefreshScreen() {
 
   currentBuffer.clear();
 
-  currentBuffer.append(TERM_DISABLE_CURSOR);
-  currentBuffer.append(TERM_MOVE_CURSOR_TOP_LEFT);
+  currentBuffer.append(Term::TERM_DISABLE_CURSOR);
+  currentBuffer.append(Term::TERM_MOVE_CURSOR_TOP_LEFT);
 
   editorDrawRows();
 
-  currentBuffer.append(TERM_MOVE_CURSOR((E.cursor.y - E.offset.y) + 1,
+  currentBuffer.append(Term::TERM_MOVE_CURSOR((E.cursor.y - E.offset.y) + 1,
                                         (E.cursor.x - E.offset.x) + 1));
-  currentBuffer.append(TERM_ENABLE_CURSOR);
+  currentBuffer.append(Term::TERM_ENABLE_CURSOR);
 
   std::cout << currentBuffer;
   std::cout.flush();
@@ -306,8 +294,8 @@ void editorProcessKeypress() {
   int c = editorReadKey();
   switch (c) {
   case CTRL_KEY('q'):
-    std::cout << TERM_CLEAR_SCREEN;
-    std::cout << TERM_MOVE_CURSOR_TOP_LEFT;
+    std::cout << Term::TERM_CLEAR_SCREEN;
+    std::cout << Term::TERM_MOVE_CURSOR_TOP_LEFT;
     exit(0);
     break;
   case 'h':
@@ -343,7 +331,8 @@ void editorProcessKeypress() {
     break;
   case Key::PAGE_DOWN:
     if (E.offset.y + E.screenRows < SZ(E.rows)) {
-      E.cursor.y = std::min((E.offset.y + E.screenRows * 2) - 1, SZ(E.rows) - 1);
+      E.cursor.y =
+          std::min((E.offset.y + E.screenRows * 2) - 1, SZ(E.rows) - 1);
     }
     break;
   case Key::HOME_KEY:
