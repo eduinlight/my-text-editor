@@ -1,60 +1,43 @@
 PROJECT_NAME=editor
+PROJECT_VERSION=1.0
+OUTPUT=./bin
+OUTPUT_DEBUG=${OUTPUT}/debug
+OUTPUT_RELEASE=${OUTPUT}/release
 
-# Compiler and flags
-CC = g++
-FLAGS = -Wall -Wextra -std=c++23
-FLAGS_DEBUG = -g
-FLAGS_RELEASE = -O3
-
-# Directories
-SRC_DIR = src
-BIN_DIR = bin
-DEBUG_DIR = bin/debug
-RELEASE_DIR = bin/release
-OBJ_DIR = .obj
-
-# Target executable name
-TARGET_DEBUG = $(DEBUG_DIR)/${PROJECT_NAME}
-TARGET_RELEASE = $(RELEASE_DIR)/${PROJECT_NAME}
-
-# Find all .cpp files in the src directory
-SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
-
-# Convert .cpp source files to .o object files
-OBJECTS = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SOURCES))
-
-# Default target
 all: debug
 
-debug: FLAGS += $(FLAGS_DEBUG)
-debug: $(TARGET_DEBUG)
+configure: BUILD_DIR=${OUTPUT_DEBUG}
+configure: BUILD_TYPE=Debug
+configure: cmake-configure
 
-release: FLAGS += $(FLAGS_RELEASE)
-release: $(TARGET_RELEASE)
+configure-release: BUILD_DIR=${OUTPUT_RELEASE}
+configure-release: BUILD_TYPE=Release
+configure-release: cmake-configure
 
-$(TARGET_DEBUG): $(OBJECTS)
-	@mkdir -p $(DEBUG_DIR)
-	$(CC) $(FLAGS) -o $@ $(OBJECTS)
+build: BUILD_DIR=${OUTPUT_DEBUG}
+build: cmake-build
 
-$(TARGET_RELEASE): $(OBJECTS)
-	@mkdir -p $(RELEASE_DIR)
-	$(CC) $(FLAGS) -o $@ $(OBJECTS)
+build-release: BUILD_DIR=${OUTPUT_RELEASE}
+build-release: cmake-build
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
-	@mkdir -p $(OBJ_DIR)
-	$(CC) $(FLAGS) -c $< -o $@
-
-clean:
-	rm -rf $(OBJ_DIR) $(BIN_DIR)
-
-run: debug
-	@${TARGET_DEBUG}
-
-gdb: debug
-	@gdb ${TARGET_DEBUG}
+run:
+	@${OUTPUT_DEBUG}/${PROJECT_NAME}
 
 run-release:
-	@${TARGET_RELEASE}
+	@${OUTPUT_RELEASE}/${PROJECT_NAME}
 
-.PHONY: all clean release debug
+clean:
+	@rm -rf ${OUTPUT}
 
+debug: clean configure build
+
+release: clean configure-release build-release
+
+cmake-build:
+	@cd ${BUILD_DIR} && make
+
+cmake-configure:
+	@PROJECT_NAME=${PROJECT_NAME} \
+		PROJECT_VERSION=${PROJECT_VERSION} \
+		OUTPUT_RELEASE=${OUTPUT_RELEASE} \
+		cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -S . -B ${BUILD_DIR}
