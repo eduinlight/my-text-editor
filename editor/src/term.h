@@ -21,6 +21,9 @@ constexpr auto TERM_CLEAR_SCREEN = "\x1b[2J";
 constexpr auto TERM_CLEAR_ROW_FROM_CURSOR_TO_END = "\x1b[K";
 constexpr auto TERM_EMPTY_LINE = "~\x1b[K";
 
+constexpr auto TERM_DISABLE_TEXT_SELECT = "\x1b[?1000h\x1b[?1006h";
+constexpr auto TERM_ENABLE_TEXT_SELECT = "\x1b[?1000l\x1b[?1006l";
+
 void disableRawMode();
 
 void enableRawMode();

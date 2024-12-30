@@ -1,3 +1,4 @@
+#include <format>
 #include <iostream>
 
 #include "editor.h"
@@ -14,25 +15,50 @@ Editor::Editor()
 
 void Editor::editorOpen(const std::string &file) {
   m_rows = IO::readFileToVector(file);
+  refreshLineParams();
+}
+
+void Editor::refreshLineParams() {
+  int n = m_rows.size();
+  m_lineNumberColumnSize = 0;
+  while (n) {
+    n /= 10;
+    m_lineNumberColumnSize++;
+  }
+  m_lineLeftPadding = 1;
+  m_lineStatusSize = 2;
+  m_rowStartSize =
+      m_lineStatusSize + m_lineNumberColumnSize + m_lineLeftPadding;
+  m_editableScreenCols = m_screenCols - m_rowStartSize;
 }
 
 void Editor::editorDrawRows() {
+  std::string leftPadding = std::string(m_lineLeftPadding, ' ');
+
   for (int y = 0; y < m_screenRows; y++) {
     int fileY = m_offset.y + y;
     if (fileY < SZ(m_rows)) {
       if (y > 0)
         m_currentBuffer.append(Term::TERM_MOVE_CURSOR_TO_START_NEXT_LINE);
 
+      std::string lineStatus = std::string(m_lineStatusSize, ' ');
+      std::string lineNumber = std::format("{:d}", m_offset.y + y + 1);
+      std::string lineNumberLeftPad =
+          std::string(m_lineNumberColumnSize - SZ(lineNumber), ' ');
+      std::string rowStart =
+          lineStatus + lineNumberLeftPad + lineNumber + leftPadding;
+      m_currentBuffer.append(rowStart);
       auto row = m_rows[fileY];
       std::string visibleRow;
       if (!row.empty() && SZ(row) >= m_offset.x)
-        visibleRow = row.substr(m_offset.x, m_screenCols);
+        visibleRow = row.substr(m_offset.x, m_editableScreenCols);
       if (!visibleRow.empty())
         m_currentBuffer.append(visibleRow);
-
-      if (SZ(visibleRow) < m_screenCols)
+      if (SZ(visibleRow) < m_editableScreenCols)
         m_currentBuffer.append(Term::TERM_CLEAR_ROW_FROM_CURSOR_TO_END);
     } else {
+      // if (y == SZ(m_rows))
+      // m_currentBuffer.append(Term::TERM_DISABLE_MOUSE);
       if (y > 0)
         m_currentBuffer.append(Term::TERM_MOVE_CURSOR_TO_START_NEXT_LINE);
       m_currentBuffer.append(Term::TERM_EMPTY_LINE);
@@ -48,8 +74,8 @@ void Editor::updateEditorScroll() {
 
   if (m_cursor.x < m_offset.x)
     m_offset.x = m_cursor.x;
-  else if (m_cursor.x >= m_offset.x + m_screenCols)
-    m_offset.x = m_cursor.x - m_screenCols + 1;
+  else if (m_cursor.x >= m_offset.x + m_editableScreenCols)
+    m_offset.x = m_cursor.x - m_editableScreenCols + 1;
 }
 
 void Editor::editorRefreshScreen() {
@@ -62,8 +88,9 @@ void Editor::editorRefreshScreen() {
 
   editorDrawRows();
 
-  m_currentBuffer.append(Term::TERM_MOVE_CURSOR((m_cursor.y - m_offset.y) + 1,
-                                                (m_cursor.x - m_offset.x) + 1));
+  m_currentBuffer.append(
+      Term::TERM_MOVE_CURSOR((m_cursor.y - m_offset.y) + 1,
+                             m_rowStartSize + (m_cursor.x - m_offset.x) + 1));
   m_currentBuffer.append(Term::TERM_ENABLE_CURSOR);
 
   std::cout << m_currentBuffer;

@@ -20,6 +20,13 @@ private:
   int m_screenCols;
   std::vector<std::string> m_rows;
   buffer m_currentBuffer;
+  int m_lineLeftPadding;
+  int m_lineStatusSize;
+  int m_lineNumberColumnSize;
+  int m_rowStartSize;
+  int m_editableScreenCols;
+
+  void refreshLineParams();
 
 public:
   Editor();
