@@ -85,7 +85,8 @@ void Editor::editorProcessKeypress() {
     break;
   case 'l':
   case Keyboard::Key::ARROW_RIGHT:
-    if (m_cursor.x < SZ(m_rows[m_cursor.y]) - 1)
+    if (!m_rows.empty() && !m_rows[m_cursor.y].empty() &&
+        m_cursor.x < SZ(m_rows[m_cursor.y]) - 1)
       m_cursor.x++;
     break;
   case 'k':
@@ -119,7 +120,9 @@ void Editor::editorProcessKeypress() {
     m_cursor.x = 0;
     break;
   case Keyboard::Key::END_KEY:
-    m_cursor.x = SZ(m_rows[m_cursor.y]);
+    if (!m_rows.empty() && !m_rows[m_cursor.y].empty()) {
+      m_cursor.x = SZ(m_rows[m_cursor.y]);
+    }
     break;
   }
 }
