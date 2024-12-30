@@ -148,7 +148,7 @@ void Editor::editorProcessKeypress() {
     break;
   case Keyboard::Key::END_KEY:
     if (!m_rows.empty() && !m_rows[m_cursor.y].empty()) {
-      m_cursor.x = SZ(m_rows[m_cursor.y]);
+      m_cursor.x = SZ(m_rows[m_cursor.y]) - 1;
     }
     break;
   }
