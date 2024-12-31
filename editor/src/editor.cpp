@@ -113,25 +113,31 @@ void Editor::editorProcessKeypress() {
     std::cout << Term::TERM_MOVE_CURSOR_TOP_LEFT;
     exit(0);
     break;
-  case CTRL_KEY('u'):
+  case CTRL_KEY('u'): {
+    int steps = m_screenRows / 2;
     if (m_offset.y == 0)
-      m_cursor.y = std::max(m_cursor.y - m_screenRows / 2, 0);
+      m_cursor.y = std::max(m_cursor.y - steps, 0);
     else {
-      int d = m_cursor.y - m_offset.y;
-      m_offset.y = std::max(m_offset.y - m_screenRows / 2, 0);
-      m_cursor.y = std::min(m_offset.y + d, SZ(m_rows) - 1);
+      int screenPos = m_cursor.y - m_offset.y;
+      m_offset.y = std::max(m_offset.y - steps, 0);
+      m_cursor.y = std::min(m_offset.y + screenPos, SZ(m_rows) - 1);
     }
     fixXCursor();
     break;
+  }
   case CTRL_KEY('d'): {
     int cursorEnd = SZ(m_rows) - 1;
-    bool isLastPage = m_offset.y + m_screenRows - 1 >= cursorEnd;
+    bool isLastPage = m_offset.y + m_screenRows > cursorEnd;
+    int steps = m_screenRows / 2;
+    int lastPageStart = cursorEnd - m_screenRows + 1;
     if (isLastPage) {
-      m_cursor.y = std::min(m_cursor.y + m_screenRows / 2, cursorEnd);
+      m_cursor.y = std::min(m_cursor.y + steps, cursorEnd);
     } else {
-      int d = m_cursor.y - m_offset.y;
-      m_offset.y = std::min(m_offset.y + m_screenRows / 2, cursorEnd);
-      m_cursor.y = std::min(m_offset.y + m_screenRows / 2 + d, cursorEnd);
+      int screenPos = m_cursor.y - m_offset.y;
+      m_offset.y = std::min(m_offset.y + steps, cursorEnd);
+      m_cursor.y = std::min(m_offset.y + screenPos, cursorEnd);
+      if (m_offset.y > lastPageStart)
+        m_offset.y = lastPageStart;
     }
     fixXCursor();
     break;
