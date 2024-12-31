@@ -1,3 +1,4 @@
+#include <csignal>
 #include <format>
 #include <iostream>
 
@@ -9,17 +10,19 @@
 
 Editor::Editor()
     : m_cursor(Point(0, 0)), m_offset(Point(0, 0)), m_currentBuffer("") {
-  if (Term::getWindowSize(&m_screenRows, &m_screenCols) == -1)
-    IO::die("getWindowSize");
+  refresh();
 }
 
 void Editor::editorOpen(const std::string &file) {
   m_rows = IO::readFileToVector(file);
-  refreshLineParams();
+  refresh();
 }
 
-void Editor::refreshLineParams() {
-  int n = m_rows.size();
+void Editor::refresh() {
+  if (Term::getWindowSize(&m_screenRows, &m_screenCols) == -1)
+    IO::die("getWindowSize");
+
+  int n = SZ(m_rows);
   m_lineNumberColumnSize = 0;
   while (n) {
     n /= 10;
@@ -97,6 +100,11 @@ void Editor::editorRefreshScreen() {
   std::cout.flush();
 }
 
+void Editor::fixXCursor() {
+  if (!m_rows.empty() && m_cursor.x >= SZ(m_rows[m_cursor.y]))
+    m_cursor.x = std::max(SZ(m_rows[m_cursor.y]) - 1, 0);
+}
+
 void Editor::editorProcessKeypress() {
   int c = Keyboard::readKey();
   switch (c) {
@@ -105,6 +113,29 @@ void Editor::editorProcessKeypress() {
     std::cout << Term::TERM_MOVE_CURSOR_TOP_LEFT;
     exit(0);
     break;
+  case CTRL_KEY('u'):
+    if (m_offset.y == 0)
+      m_cursor.y = std::max(m_cursor.y - m_screenRows / 2, 0);
+    else {
+      int d = m_cursor.y - m_offset.y;
+      m_offset.y = std::max(m_offset.y - m_screenRows / 2, 0);
+      m_cursor.y = std::min(m_offset.y + d, SZ(m_rows) - 1);
+    }
+    fixXCursor();
+    break;
+  case CTRL_KEY('d'): {
+    int cursorEnd = SZ(m_rows) - 1;
+    bool isLastPage = m_offset.y + m_screenRows - 1 >= cursorEnd;
+    if (isLastPage) {
+      m_cursor.y = std::min(m_cursor.y + m_screenRows / 2, cursorEnd);
+    } else {
+      int d = m_cursor.y - m_offset.y;
+      m_offset.y = std::min(m_offset.y + m_screenRows / 2, cursorEnd);
+      m_cursor.y = std::min(m_offset.y + m_screenRows / 2 + d, cursorEnd);
+    }
+    fixXCursor();
+    break;
+  }
   case 'h':
   case Keyboard::Key::ARROW_LEFT:
     if (m_cursor.x > 0)
@@ -120,27 +151,28 @@ void Editor::editorProcessKeypress() {
   case Keyboard::Key::ARROW_UP:
     if (m_cursor.y > 0) {
       m_cursor.y--;
-      if (!m_rows.empty() && m_cursor.x >= SZ(m_rows[m_cursor.y]))
-        m_cursor.x = std::max(SZ(m_rows[m_cursor.y]) - 1, 0);
+      fixXCursor();
     }
     break;
   case 'j':
   case Keyboard::Key::ARROW_DOWN:
     if (m_cursor.y < SZ(m_rows) - 1) {
       m_cursor.y++;
-      if (!m_rows.empty() && m_cursor.x >= SZ(m_rows[m_cursor.y]))
-        m_cursor.x = std::max(SZ(m_rows[m_cursor.y]) - 1, 0);
+      fixXCursor();
     }
     break;
   case Keyboard::Key::PAGE_UP:
     if (m_offset.y > 0) {
-      m_cursor.y = std::max(m_offset.y - m_screenRows, 0);
+      m_offset.y = std::max(m_offset.y - m_screenRows - 2, 0);
+      m_cursor.y = std::min(m_offset.y + m_screenRows - 1, SZ(m_rows) - 1);
+      fixXCursor();
     }
     break;
   case Keyboard::Key::PAGE_DOWN:
-    if (m_offset.y + m_screenRows < SZ(m_rows)) {
-      m_cursor.y =
-          std::min((m_offset.y + m_screenRows * 2) - 1, SZ(m_rows) - 1);
+    if (m_offset.y < SZ(m_rows) - 1) {
+      m_offset.y = std::min(m_offset.y + m_screenRows - 2, SZ(m_rows) - 1);
+      m_cursor.y = m_offset.y;
+      fixXCursor();
     }
     break;
   case Keyboard::Key::HOME_KEY:

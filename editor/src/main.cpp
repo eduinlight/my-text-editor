@@ -1,6 +1,8 @@
-/*** includes ***/
+#include <atomic>
+#include <chrono>
+#include <csignal>
+#include <thread>
 
-#include "keyboard.h"
 #define _DEFAULT_SOURCE
 #define _BSD_SOURCE
 #define _GNU_SOURCE
@@ -8,11 +10,24 @@
 #include "editor.h"
 #include "term.h"
 
+Editor editor;
+
+void handleResize(int) { editor.refresh(); }
+
 int main(int argc, char *argv[]) {
   Term::enableRawMode();
   atexit(Term::disableRawMode);
 
-  Editor editor;
+  signal(SIGWINCH, handleResize);
+  std::signal(SIGTTOU, SIG_IGN);
+
+  std::atomic<bool> keepMonitoring = true;
+  std::thread monitorThread = std::thread([&]() {
+    while (keepMonitoring) {
+      editor.refresh();
+      std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+  });
 
   if (argc >= 2) {
     editor.editorOpen(std::string(argv[1]));
@@ -22,6 +37,10 @@ int main(int argc, char *argv[]) {
     editor.editorRefreshScreen();
     editor.editorProcessKeypress();
   }
+
+  keepMonitoring = false;
+  if (monitorThread.joinable())
+    monitorThread.join();
 
   return EXIT_SUCCESS;
 }

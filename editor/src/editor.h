@@ -1,6 +1,8 @@
 #pragma once
 
+#include <atomic>
 #include <string>
+#include <thread>
 #include <vector>
 
 struct Point {
@@ -25,8 +27,11 @@ private:
   int m_lineNumberColumnSize;
   int m_rowStartSize;
   int m_editableScreenCols;
+  std::thread m_monitorThread;
+  std::atomic<bool> m_running;
+  int m_lastScreenRows, m_lastScreenCols;
 
-  void refreshLineParams();
+  void fixXCursor();
 
 public:
   Editor();
@@ -35,4 +40,5 @@ public:
   void updateEditorScroll();
   void editorRefreshScreen();
   void editorProcessKeypress();
+  void refresh();
 };
