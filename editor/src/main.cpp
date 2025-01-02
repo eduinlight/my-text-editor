@@ -1,7 +1,4 @@
-#include <atomic>
-#include <chrono>
 #include <csignal>
-#include <thread>
 
 #define _DEFAULT_SOURCE
 #define _BSD_SOURCE
@@ -12,7 +9,10 @@
 
 Editor editor;
 
-void handleResize(int) { editor.refresh(); }
+void handleResize(int) {
+  editor.refresh();
+  editor.draw();
+}
 
 int main(int argc, char *argv[]) {
   Term::enableRawMode();
@@ -21,26 +21,14 @@ int main(int argc, char *argv[]) {
   signal(SIGWINCH, handleResize);
   std::signal(SIGTTOU, SIG_IGN);
 
-  std::atomic<bool> keepMonitoring = true;
-  std::thread monitorThread = std::thread([&]() {
-    while (keepMonitoring) {
-      editor.refresh();
-      std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    }
-  });
-
   if (argc >= 2) {
-    editor.editorOpen(std::string(argv[1]));
+    editor.openFile(std::string(argv[1]));
   }
 
   while (true) {
-    editor.editorRefreshScreen();
-    editor.editorProcessKeypress();
+    editor.draw();
+    editor.processKeypress();
   }
-
-  keepMonitoring = false;
-  if (monitorThread.joinable())
-    monitorThread.join();
 
   return EXIT_SUCCESS;
 }

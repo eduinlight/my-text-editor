@@ -13,7 +13,7 @@ Editor::Editor()
   refresh();
 }
 
-void Editor::editorOpen(const std::string &file) {
+void Editor::openFile(const std::string &file) {
   m_rows = IO::readFileToVector(file);
   refresh();
 }
@@ -35,7 +35,7 @@ void Editor::refresh() {
   m_editableScreenCols = m_screenCols - m_rowStartSize;
 }
 
-void Editor::editorDrawRows() {
+void Editor::drawRows() {
   std::string leftPadding = std::string(m_lineLeftPadding, ' ');
 
   for (int y = 0; y < m_screenRows; y++) {
@@ -69,7 +69,7 @@ void Editor::editorDrawRows() {
   }
 }
 
-void Editor::updateEditorScroll() {
+void Editor::updateScroll() {
   if (m_cursor.y < m_offset.y)
     m_offset.y = m_cursor.y;
   else if (m_cursor.y >= m_offset.y + m_screenRows)
@@ -81,15 +81,15 @@ void Editor::updateEditorScroll() {
     m_offset.x = m_cursor.x - m_editableScreenCols + 1;
 }
 
-void Editor::editorRefreshScreen() {
-  updateEditorScroll();
+void Editor::draw() {
+  updateScroll();
 
   m_currentBuffer.clear();
 
   m_currentBuffer.append(Term::TERM_DISABLE_CURSOR);
   m_currentBuffer.append(Term::TERM_MOVE_CURSOR_TOP_LEFT);
 
-  editorDrawRows();
+  drawRows();
 
   m_currentBuffer.append(
       Term::TERM_MOVE_CURSOR((m_cursor.y - m_offset.y) + 1,
@@ -105,7 +105,7 @@ void Editor::fixXCursor() {
     m_cursor.x = std::max(SZ(m_rows[m_cursor.y]) - 1, 0);
 }
 
-void Editor::editorProcessKeypress() {
+void Editor::processKeypress() {
   int c = Keyboard::readKey();
   switch (c) {
   case CTRL_KEY('q'):

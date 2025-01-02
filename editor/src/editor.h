@@ -32,13 +32,13 @@ private:
   int m_lastScreenRows, m_lastScreenCols;
 
   void fixXCursor();
+  void drawRows();
 
 public:
   Editor();
-  void editorOpen(const std::string &file);
-  void editorDrawRows();
-  void updateEditorScroll();
-  void editorRefreshScreen();
-  void editorProcessKeypress();
+  void openFile(const std::string &file);
+  void updateScroll();
+  void draw();
+  void processKeypress();
   void refresh();
 };
