@@ -3,9 +3,9 @@
 ## Roadmap
 
 X Fix scroll behaviour. Vim like.
+X Fix on windows resize
 
 - Cursor with UP and Down keys should preserve previous column
-- Fix on windows resize
 - Only text selection on editor
 - Simple status bar
 - Simple commands bar
