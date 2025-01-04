@@ -4,11 +4,14 @@
 #include <string>
 #include <termios.h>
 
-namespace Term {
+namespace term {
 
 constexpr auto TERM_DISABLE_CURSOR = "\x1b[?25l";
 constexpr auto TERM_ENABLE_CURSOR = "\x1b[?25h";
 constexpr auto TERM_REPORT_CURSOR_POSITION = "\x1b[6n";
+
+constexpr auto TERM_DISABLE_TEXT_WRAPPING = "\x1b[?7l";
+constexpr auto TERM_ENABLE_TEXT_WRAPPING = "\x1b[?7h";
 
 inline constexpr std::string TERM_MOVE_CURSOR(int y, int x) {
   return std::string(std::format("\x1b[{:d};{:d}H", (y), (x)));
@@ -30,4 +33,4 @@ void enableRawMode();
 
 int getWindowSize(int *rows, int *cols);
 
-}; // namespace Term
+}; // namespace term

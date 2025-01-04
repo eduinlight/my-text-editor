@@ -5,6 +5,7 @@
 X Fix scroll behaviour. Vim like.
 X Fix on windows resize
 
+- FIx editor empty state.
 - Cursor with UP and Down keys should preserve previous column
 - Only text selection on editor
 - Simple status bar

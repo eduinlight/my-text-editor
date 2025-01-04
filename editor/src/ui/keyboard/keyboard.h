@@ -2,7 +2,7 @@
 
 #define CTRL_KEY(k) ((k) & 0x1f)
 
-namespace Keyboard {
+namespace ui::keyboard {
 enum Key {
   ARROW_LEFT = 1000,
   ARROW_RIGHT,
@@ -16,4 +16,4 @@ enum Key {
 };
 
 int readKey();
-} // namespace Keyboard
+} // namespace ui::keyboard

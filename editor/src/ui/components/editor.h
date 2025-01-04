@@ -1,27 +1,20 @@
 #pragma once
 
+#include "../../types.h"
 #include <atomic>
 #include <string>
 #include <thread>
 #include <vector>
 
-struct Point {
-  int x;
-  int y;
-
-  Point(int _x, int _y) : x(_x), y(_y) {}
-};
-
-typedef std::basic_string<char> buffer;
-
-struct Editor {
+namespace ui::components {
+class Editor {
 private:
   Point m_cursor;
   Point m_offset;
   int m_screenRows;
   int m_screenCols;
   std::vector<std::string> m_rows;
-  buffer m_currentBuffer;
+  Buffer m_currentBuffer;
   int m_lineLeftPadding;
   int m_lineStatusSize;
   int m_lineNumberColumnSize;
@@ -42,3 +35,4 @@ public:
   void processKeypress();
   void refresh();
 };
+} // namespace ui::components

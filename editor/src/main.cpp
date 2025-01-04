@@ -4,10 +4,10 @@
 #define _BSD_SOURCE
 #define _GNU_SOURCE
 
-#include "editor.h"
-#include "term.h"
+#include "term/term.h"
+#include "ui/ui.h"
 
-Editor editor;
+ui::components::Editor editor;
 
 void handleResize(int) {
   editor.refresh();
@@ -15,8 +15,8 @@ void handleResize(int) {
 }
 
 int main(int argc, char *argv[]) {
-  Term::enableRawMode();
-  atexit(Term::disableRawMode);
+  term::enableRawMode();
+  atexit(term::disableRawMode);
 
   signal(SIGWINCH, handleResize);
   std::signal(SIGTTOU, SIG_IGN);

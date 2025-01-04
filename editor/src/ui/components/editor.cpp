@@ -2,11 +2,13 @@
 #include <format>
 #include <iostream>
 
+#include "../../io/io.h"
+#include "../../macros.h"
+#include "../../term/term.h"
+#include "../keyboard/keyboard.h"
 #include "editor.h"
-#include "io.h"
-#include "keyboard.h"
-#include "macros.h"
-#include "term.h"
+
+namespace ui::components {
 
 Editor::Editor()
     : m_cursor(Point(0, 0)), m_offset(Point(0, 0)), m_currentBuffer("") {
@@ -14,13 +16,13 @@ Editor::Editor()
 }
 
 void Editor::openFile(const std::string &file) {
-  m_rows = IO::readFileToVector(file);
+  m_rows = io::readFileToVector(file);
   refresh();
 }
 
 void Editor::refresh() {
-  if (Term::getWindowSize(&m_screenRows, &m_screenCols) == -1)
-    IO::die("getWindowSize");
+  if (term::getWindowSize(&m_screenRows, &m_screenCols) == -1)
+    io::die("getWindowSize");
 
   int n = SZ(m_rows);
   m_lineNumberColumnSize = 0;
@@ -42,7 +44,7 @@ void Editor::drawRows() {
     int fileY = m_offset.y + y;
     if (fileY < SZ(m_rows)) {
       if (y > 0)
-        m_currentBuffer.append(Term::TERM_MOVE_CURSOR_TO_START_NEXT_LINE);
+        m_currentBuffer.append(term::TERM_MOVE_CURSOR_TO_START_NEXT_LINE);
 
       std::string lineStatus = std::string(m_lineStatusSize, ' ');
       std::string lineNumber = std::format("{:d}", m_offset.y + y + 1);
@@ -58,13 +60,13 @@ void Editor::drawRows() {
       if (!visibleRow.empty())
         m_currentBuffer.append(visibleRow);
       if (SZ(visibleRow) < m_editableScreenCols)
-        m_currentBuffer.append(Term::TERM_CLEAR_ROW_FROM_CURSOR_TO_END);
+        m_currentBuffer.append(term::TERM_CLEAR_ROW_FROM_CURSOR_TO_END);
     } else {
       // if (y == SZ(m_rows))
-      // m_currentBuffer.append(Term::TERM_DISABLE_MOUSE);
+      // m_currentBuffer.append(term::TERM_DISABLE_MOUSE);
       if (y > 0)
-        m_currentBuffer.append(Term::TERM_MOVE_CURSOR_TO_START_NEXT_LINE);
-      m_currentBuffer.append(Term::TERM_EMPTY_LINE);
+        m_currentBuffer.append(term::TERM_MOVE_CURSOR_TO_START_NEXT_LINE);
+      m_currentBuffer.append(term::TERM_EMPTY_LINE);
     }
   }
 }
@@ -86,15 +88,17 @@ void Editor::draw() {
 
   m_currentBuffer.clear();
 
-  m_currentBuffer.append(Term::TERM_DISABLE_CURSOR);
-  m_currentBuffer.append(Term::TERM_MOVE_CURSOR_TOP_LEFT);
+  m_currentBuffer.append(term::TERM_DISABLE_CURSOR);
+  m_currentBuffer.append(term::TERM_MOVE_CURSOR_TOP_LEFT);
 
   drawRows();
 
   m_currentBuffer.append(
-      Term::TERM_MOVE_CURSOR((m_cursor.y - m_offset.y) + 1,
+      term::TERM_MOVE_CURSOR((m_cursor.y - m_offset.y) + 1,
                              m_rowStartSize + (m_cursor.x - m_offset.x) + 1));
-  m_currentBuffer.append(Term::TERM_ENABLE_CURSOR);
+  m_currentBuffer.append(term::TERM_ENABLE_CURSOR);
+  m_currentBuffer.append(term::TERM_DISABLE_TEXT_WRAPPING);
+  // m_currentBuffer.append(term::TERM_ENABLE_TEXT_WRAPPING);
 
   std::cout << m_currentBuffer;
   std::cout.flush();
@@ -106,11 +110,11 @@ void Editor::fixXCursor() {
 }
 
 void Editor::processKeypress() {
-  int c = Keyboard::readKey();
+  int c = keyboard::readKey();
   switch (c) {
   case CTRL_KEY('q'):
-    std::cout << Term::TERM_CLEAR_SCREEN;
-    std::cout << Term::TERM_MOVE_CURSOR_TOP_LEFT;
+    std::cout << term::TERM_CLEAR_SCREEN;
+    std::cout << term::TERM_MOVE_CURSOR_TOP_LEFT;
     exit(0);
     break;
   case CTRL_KEY('u'): {
@@ -143,51 +147,52 @@ void Editor::processKeypress() {
     break;
   }
   case 'h':
-  case Keyboard::Key::ARROW_LEFT:
+  case keyboard::Key::ARROW_LEFT:
     if (m_cursor.x > 0)
       m_cursor.x--;
     break;
   case 'l':
-  case Keyboard::Key::ARROW_RIGHT:
+  case keyboard::Key::ARROW_RIGHT:
     if (!m_rows.empty() && !m_rows[m_cursor.y].empty() &&
         m_cursor.x < SZ(m_rows[m_cursor.y]) - 1)
       m_cursor.x++;
     break;
   case 'k':
-  case Keyboard::Key::ARROW_UP:
+  case keyboard::Key::ARROW_UP:
     if (m_cursor.y > 0) {
       m_cursor.y--;
       fixXCursor();
     }
     break;
   case 'j':
-  case Keyboard::Key::ARROW_DOWN:
+  case keyboard::Key::ARROW_DOWN:
     if (m_cursor.y < SZ(m_rows) - 1) {
       m_cursor.y++;
       fixXCursor();
     }
     break;
-  case Keyboard::Key::PAGE_UP:
+  case keyboard::Key::PAGE_UP:
     if (m_offset.y > 0) {
       m_offset.y = std::max(m_offset.y - m_screenRows - 2, 0);
       m_cursor.y = std::min(m_offset.y + m_screenRows - 1, SZ(m_rows) - 1);
       fixXCursor();
     }
     break;
-  case Keyboard::Key::PAGE_DOWN:
+  case keyboard::Key::PAGE_DOWN:
     if (m_offset.y < SZ(m_rows) - 1) {
       m_offset.y = std::min(m_offset.y + m_screenRows - 2, SZ(m_rows) - 1);
       m_cursor.y = m_offset.y;
       fixXCursor();
     }
     break;
-  case Keyboard::Key::HOME_KEY:
+  case keyboard::Key::HOME_KEY:
     m_cursor.x = 0;
     break;
-  case Keyboard::Key::END_KEY:
+  case keyboard::Key::END_KEY:
     if (!m_rows.empty() && !m_rows[m_cursor.y].empty()) {
       m_cursor.x = SZ(m_rows[m_cursor.y]) - 1;
     }
     break;
   }
 }
+} // namespace ui::components

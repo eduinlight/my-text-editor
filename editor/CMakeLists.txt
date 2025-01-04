@@ -15,7 +15,15 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -pedantic")
 
 file(GLOB SOURCES CONFIGURE_DEPENDS src/*.cpp)
-add_executable(${PROJECT_NAME} src/main.cpp ${SOURCES})
+file(GLOB IO CONFIGURE_DEPENDS src/io/*.cpp)
+file(GLOB TERM CONFIGURE_DEPENDS src/term/*.cpp)
+file(GLOB UI CONFIGURE_DEPENDS 
+  src/ui/*.cpp 
+  src/ui/keyboard/*.cpp 
+  src/ui/components/*.cpp 
+  src/ui/base/*.cpp 
+)
+add_executable(${PROJECT_NAME} src/main.cpp ${SOURCES} ${IO} ${TERM} ${UI})
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_BINARY_DIR})
 

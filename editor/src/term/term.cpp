@@ -1,17 +1,17 @@
 #include "term.h"
-#include "io.h"
+#include "../io/io.h"
 #include <ios>
 #include <iostream>
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-namespace Term {
+namespace term {
 
 termios orig_termios;
 
 void disableRawMode() {
-  if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &Term::orig_termios) == -1)
-    IO::die("tcsetattr");
+  if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &term::orig_termios) == -1)
+    io::die("tcsetattr");
 }
 
 void enableRawMode() {
@@ -19,10 +19,10 @@ void enableRawMode() {
   std::cin.tie(nullptr);
   std::cout.tie(nullptr);
 
-  if (tcgetattr(STDIN_FILENO, &Term::orig_termios) == -1)
-    IO::die("tcgetattr");
+  if (tcgetattr(STDIN_FILENO, &term::orig_termios) == -1)
+    io::die("tcgetattr");
 
-  struct termios raw = Term::orig_termios;
+  struct termios raw = term::orig_termios;
   raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
   raw.c_oflag &= ~(OPOST);
   raw.c_cflag |= (CS8);
@@ -31,17 +31,17 @@ void enableRawMode() {
   raw.c_cc[VTIME] = 1;
 
   if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1)
-    IO::die("tcsetattr");
+    io::die("tcsetattr");
 }
 
 int getWindowSizeFallback(int *rows, int *cols) {
-  if (std::cout.write(Term::TERM_MOVE_CURSOR_BOTTOM_RIGHT, 12).fail())
+  if (std::cout.write(term::TERM_MOVE_CURSOR_BOTTOM_RIGHT, 12).fail())
     return -1;
 
   char buf[32];
   size_t i = 0;
 
-  if (std::cout.write(Term::TERM_REPORT_CURSOR_POSITION, 4).fail())
+  if (std::cout.write(term::TERM_REPORT_CURSOR_POSITION, 4).fail())
     return -1;
 
   while (i < sizeof(buf) - 1) {
@@ -71,4 +71,4 @@ int getWindowSize(int *rows, int *cols) {
   }
 }
 
-} // namespace Term
+} // namespace term

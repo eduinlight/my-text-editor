@@ -1,15 +1,17 @@
 #include <cerrno>
 #include <unistd.h>
 
-#include "io.h"
+#include "../../io/io.h"
 #include "keyboard.h"
 
-int Keyboard::readKey() {
+namespace ui::keyboard {
+
+int readKey() {
   int nread;
   char c;
   while ((nread = read(STDIN_FILENO, &c, 1)) != 1) {
     if (nread == -1 && errno != EAGAIN)
-      IO::die("read");
+      io::die("read");
   }
 
   if (c == '\x1b') {
@@ -70,3 +72,4 @@ int Keyboard::readKey() {
   }
   return c;
 }
+} // namespace ui::keyboard
